@@ -1,0 +1,9 @@
+gym-retro
+gym
+scipy
+numpy
+gym
+opencv-python
+anyrl
+tensorflow
+scikit-learn

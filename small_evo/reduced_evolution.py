@@ -1,7 +1,7 @@
 from scipy.optimize import differential_evolution
 
-from agent import Agent
-from embedding import load
+from small_evo.agent import Agent
+from small_evo.embedding import load
 import numpy as np
 import retro
 
@@ -34,7 +34,7 @@ def do_run(seq_weights, *args):
     obs = env.reset()  # TODO reset needs to return embedding
     obs, _, _, _ = env.step([0] * 9)
     reward_sum = 0
-    for i in range(2000):
+    for i in range(600):
         action_numeric = agent.get_action(obs)
         action = [0] * 9
         action[index_right] = 1 if action_numeric & 0b10 > 0 else 0
@@ -49,14 +49,24 @@ def do_run(seq_weights, *args):
         if end_of_ep:
             break
     print(reward_sum)
-    return 6000 - reward_sum
+    return 600 - reward_sum
 
 
-def log_status(xk, val):
-    print("{},{}".format(xk, val))
+def make_logger():
+    max_val = 0
+
+    def log_status(xk, val):
+        nonlocal max_val
+        if val > max_val:
+            np.save("results/evo/evolution_checkpoint.npy", xk)
+            max_val = val
+        print("{},{}".format(xk, val))
+
+    return log_status
 
 
 # differential_evolution(do_run, np.tile([-1, 1], (nr_weights, 1)))
-result = differential_evolution(do_run, [(-1, 1)] * nr_weights, disp=True, callback=log_status)
+result = differential_evolution(do_run, [(-1, 1)] * nr_weights, maxiter=50, popsize=10, disp=True,
+                                callback=make_logger())
 print("fun:{}".format(result.fun))
 np.save("evolution_result.npy", result.x)
