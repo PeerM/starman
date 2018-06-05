@@ -11,5 +11,5 @@ class ForrestAndFlatten(gym.Wrapper):
     def _step(self, action):
         """"""
         obs, reward, done, info = self.env.step(action)
-        embedded = self.embedder.transform(np.array(obs).flatten().reshape(1, -1))[0]
+        embedded = self.embedder.transform(np.array(obs).flatten().reshape(1, -1))[0].todense().T
         return embedded, reward, done, info
