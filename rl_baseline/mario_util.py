@@ -11,7 +11,7 @@ from atari_wrappers import WarpFrame, FrameStack
 from small_evo.wrappers import AutoRenderer
 
 
-def make_env(stack=True, scale_rew=True):
+def make_env(stack=True, scale_rew=True, render=None):
     """
     Create an environment with some standard wrappers.
     """
@@ -22,7 +22,8 @@ def make_env(stack=True, scale_rew=True):
     env = WarpFrame(env)
     if stack:
         env = FrameStack(env, 4)
-    env = AutoRenderer(env, auto_render_period=40)
+    if render is not None:
+        env = AutoRenderer(env, auto_render_period=render)
     return env
 
 
