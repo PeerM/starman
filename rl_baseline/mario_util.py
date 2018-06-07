@@ -6,12 +6,13 @@ Fork of openai retro-baselines
 import gym
 import numpy as np
 import retro
+from gym.wrappers import Monitor, TimeLimit
 
 from atari_wrappers import WarpFrame, FrameStack
 from small_evo.wrappers import AutoRenderer
 
 
-def make_env(stack=True, scale_rew=True, render=None):
+def make_env(stack=True, scale_rew=True, render=None, monitor=None, timelimit=False):
     """
     Create an environment with some standard wrappers.
     """
@@ -19,6 +20,10 @@ def make_env(stack=True, scale_rew=True, render=None):
     env = MarioDiscretizer(env)
     if scale_rew:
         env = RewardScaler(env)
+    if timelimit:
+        env = TimeLimit(env, max_episode_steps=200 * 60)
+    if monitor is not None:
+        env = Monitor(env, monitor, write_upon_reset=True)
     env = WarpFrame(env)
     if stack:
         env = FrameStack(env, 4)

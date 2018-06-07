@@ -7,6 +7,7 @@ Fork of openai retro-baselines
 """
 
 import tensorflow as tf
+from tqdm import tqdm
 
 from anyrl.algos import DQN
 from anyrl.envs import BatchedGymEnv
@@ -18,13 +19,10 @@ from anyrl.spaces import gym_space_vectorizer
 from rl_baseline.mario_util import AllowBacktracking, make_env
 
 
-def handle_ep(steps, reward):
-    print("steps: {}\t, reward: {}".format(steps, reward))
-
-
 def main():
     """Run DQN until the environment throws an exception."""
-    env = make_env(stack=False, scale_rew=False, render=None)
+    # "results/rainbow/2/videos/6"
+    env = make_env(stack=False, scale_rew=False, render=20, monitor=None, timelimit=False)
     # env = AllowBacktracking(make_env(stack=False, scale_rew=False))
     # TODO we might not want to allow backtracking, it kinda hurts in mario
     env = BatchedFrameStack(BatchedGymEnv([[env]]), num_images=4, concat=False)
@@ -38,21 +36,25 @@ def main():
                                   gym_space_vectorizer(env.observation_space),
                                   min_val=-200,
                                   max_val=200))
+        # TODO rebuild the online_net form the saved model
+        # type <anyrl.models.dqn_dist.NatureDistQNetwork object at ???>
+        # important methods
+        #
+        model = dqn.online_net
         player = NStepPlayer(BatchedPlayer(env, dqn.online_net), 3)
-        optimize = dqn.optimize(learning_rate=1e-4)
-        saver = tf.train.Saver(name="rainbow", keep_checkpoint_every_n_hours=1)
-        with tf.device("/gpu:1"):
-            sess.run(tf.global_variables_initializer())
-            dqn.train(num_steps=1_000_000,  # Make sure an exception arrives before we stop.
-                      player=player,
-                      replay_buffer=PrioritizedReplayBuffer(500000, 0.5, 0.4, epsilon=0.1),
-                      optimize_op=optimize,
-                      train_interval=1,
-                      target_interval=8192,
-                      batch_size=32,
-                      min_buffer_size=20000,
-                      handle_ep=handle_ep)  # in seconds
-            saver.save(sess, "/tmp/mathia_checkpoints/rainbow")
+
+        with tf.device("/cpu"):
+            # sess.run(tf.global_variables_initializer())
+
+            vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
+            try:
+                for i in tqdm(range(100000)):
+                    trajectories = player.play()
+                    for trajectori in trajectories:
+                        trajectori
+                        pass
+            except KeyboardInterrupt:
+                env.close()
 
 
 if __name__ == '__main__':
