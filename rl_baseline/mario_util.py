@@ -23,7 +23,7 @@ def make_env(stack=True, scale_rew=True, render=None, monitor=None, timelimit=Fa
     if timelimit:
         env = TimeLimit(env, max_episode_steps=200 * 60)
     if monitor is not None:
-        env = Monitor(env, monitor, write_upon_reset=True)
+        env = Monitor(env, monitor)
     env = WarpFrame(env)
     if stack:
         env = FrameStack(env, 4)

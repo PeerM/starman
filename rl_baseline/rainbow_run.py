@@ -24,11 +24,8 @@ def main():
     # "results/rainbow/2/videos/6"
     env = make_env(stack=False, scale_rew=False, render=None, monitor="results/rainbow/2/videos/4", timelimit=False)
     # env = AllowBacktracking(make_env(stack=False, scale_rew=False))
-    # TODO we might not want to allow backtracking, it kinda hurts in mario
     env = BatchedFrameStack(BatchedGymEnv([[env]]), num_images=4, concat=False)
     config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True  # pylint: disable=E1101
-    config.gpu_options.per_process_gpu_memory_fraction = 0.6
 
     with tf.Session(config=config) as sess:
         saver = tf.train.import_meta_graph("results/rainbow/2/rainbow.ckpt.meta")
