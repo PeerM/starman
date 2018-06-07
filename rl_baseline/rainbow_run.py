@@ -22,13 +22,13 @@ from rl_baseline.mario_util import AllowBacktracking, make_env
 def main():
     """Run DQN until the environment throws an exception."""
     # "results/rainbow/2/videos/6"
-    env = make_env(stack=False, scale_rew=False, render=None, monitor="results/rainbow/2/videos/4", timelimit=False)
+    env = make_env(stack=False, scale_rew=False, render=1, monitor=None, timelimit=False)
     # env = AllowBacktracking(make_env(stack=False, scale_rew=False))
     env = BatchedFrameStack(BatchedGymEnv([[env]]), num_images=4, concat=False)
     config = tf.ConfigProto()
 
     with tf.Session(config=config) as sess:
-        saver = tf.train.import_meta_graph("results/rainbow/2/rainbow.ckpt.meta")
+        saver = tf.train.import_meta_graph("results/rainbow/2/rainbow.ckpt.meta", clear_devices=True)
         # saver.restore(sess, tf.train.latest_checkpoint('results/rainbow/2'))
         saver.restore(sess, 'results/rainbow/2/rainbow.ckpt')
         model = LoadedNetwork(sess, gym_space_vectorizer(env.observation_space))
