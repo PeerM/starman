@@ -14,6 +14,11 @@ from anyrl.envs import BatchedGymEnv
 from anyrl.envs.wrappers import BatchedFrameStack
 from anyrl.rollouts import BatchedPlayer, NStepPlayer
 from anyrl.spaces import gym_space_vectorizer
+import matplotlib
+
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
+from reward_plot import RewardPlotter, make_axes
 
 from rl_baseline.loaded import LoadedNetwork
 from rl_baseline.mario_util import AllowBacktracking, make_env
@@ -38,20 +43,26 @@ def main():
 
         with tf.device("/cpu"):
             # sess.run(tf.global_variables_initializer())
-
-            vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
             try:
+                axes = make_axes()
                 for episode_index in tqdm(range(20), unit="episode"):
+                    plotter = RewardPlotter(axes, save_period=20, render_period=120, max_entries=400)
                     for i in count():
                         trajectories = player.play()
                         end_of_episode = False
+                        current_total_reward = None
                         for trajectory in trajectories:
+                            current_total_reward = trajectory["total_reward"]
                             if trajectory["is_last"]:
                                 end_of_episode = True
+                        plotter.update(current_total_reward, step=i)
                         if end_of_episode:
+                            # plt.show()
+                            plotter.render()
                             break
             except KeyboardInterrupt:
                 env.close()
+                plt.close()
 
 
 if __name__ == '__main__':

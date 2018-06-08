@@ -22,7 +22,7 @@ class AutoRenderer(gym.Wrapper):
         self.auto_render_period = auto_render_period
         self.counter = 1
 
-    def _step(self, action):
+    def step(self, action):
         """"""
         if self.counter % self.auto_render_period == 0:
             self.counter = 1
