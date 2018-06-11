@@ -10,8 +10,8 @@ from reward_plot import RewardPlotter, make_axes
 
 movie = retro.Movie('/home/peer/mario/1-1_basic_5.fm2')
 
-env = retro.make("SuperMarioBros-Nes", None, use_restricted_actions=retro.Actions.ALL)
-env.initial_state = movie.get_state()
+env = retro.make("SuperMarioBros-Nes", retro.State.NONE, use_restricted_actions=retro.Actions.ALL)
+env.reset()
 env.reset()
 env = AutoRenderer(env, 1)
 
@@ -26,7 +26,7 @@ while movie.step():
     _obs, _rew, _done, _info = env.step(keys)
     plotter.update(_rew, frame_counter)
     # if frame_counter % 2 == 0:
-    #     env.render()
+    # env.render()
     frame_counter += 1
 
 env.close()
