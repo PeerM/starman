@@ -1,5 +1,6 @@
 import retro
 import matplotlib
+from gym.wrappers import Monitor
 
 from forked_lib.parse_fm2 import parse_fm2
 from small_evo.wrappers import AutoRenderer
@@ -9,7 +10,7 @@ import matplotlib.pyplot as plt
 
 from reward_plot import RewardPlotter, make_axes
 
-movie_name = '/home/peer/mario/1-1_shortcut_2.fm2'
+movie_name = 'movies/1-1_basic_5.fm2'
 playback_offset = 0
 retro_state = retro.State.NONE
 with open(movie_name) as movie_file:
@@ -17,6 +18,7 @@ with open(movie_name) as movie_file:
 
 env = retro.make("SuperMarioBros-Nes", retro_state, use_restricted_actions=retro.Actions.ALL)
 env = AutoRenderer(env, 1)
+env = Monitor(env, "./{}".format(movie_name[:-4]))
 env.reset()
 env.reset()
 
