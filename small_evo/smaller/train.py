@@ -1,3 +1,4 @@
+import pickle
 import random
 from itertools import count
 
@@ -16,11 +17,10 @@ order = ["coins", "levelHi", "levelLo", "lives", "score", "scrolling", "time", "
 
 
 class Evaluator(object):
-    def __init__(self):
+    def __init__(self, render=None, max_episode_steps=2000):
         monitor = None
         action_repeat = True
         episodic_life = True
-        render = None
         env = retro.make("SuperMarioBros-Nes")
         if monitor is not None:
             env = Monitor(env, monitor)
@@ -28,7 +28,7 @@ class Evaluator(object):
             env = AutoRenderer(env, auto_render_period=render)
         if action_repeat:
             env = FrameStack(env, 8)
-        env = TimeLimit(env, max_episode_steps=1000)
+        env = TimeLimit(env, max_episode_steps=max_episode_steps)
         if episodic_life:
             env = EpisodicLifeEnv(env, [0] * 9)
 
@@ -45,6 +45,8 @@ class Evaluator(object):
         self.agent = Agent(2, self.obs_shape, deterministic=True, embed=True)
         self.weight_shape = self.agent.weight_shape()
         self.n_weights = self.weight_shape[0] * self.agent.weight_shape()[1]
+        with open("scaler.pickle", "rb") as pickle_out_file:
+            self.scaler = pickle.load(pickle_out_file)
 
     def evaluate(self, seq_weights):
         weights = np.reshape(seq_weights, self.weight_shape)
@@ -57,7 +59,8 @@ class Evaluator(object):
             action[self.index_right] = 1
             action[self.index_b] = 1
             actual_obs = np.array([last_info[name] for name in order])  # TODO move this into a wrapper
-            action[self.index_a] = self.agent.get_action(actual_obs)
+            scaled_obs = self.scaler.transform([actual_obs])[0]
+            action[self.index_a] = self.agent.get_action(scaled_obs)
             obs, reward, done, info = self.env.step(action)
             reward_sum += reward
             last_info = info
@@ -121,3 +124,13 @@ def evolve():
 if __name__ == '__main__':
     solutions = evolve()
     print(solutions)
+
+# some result i guess 200 reward
+# [ 0.09923301 -0.20626588  0.19587401 -0.14792714 -0.18294119  0.1533143
+#  -0.00447617 -0.26682253  0.0278062  -0.20441508  0.18823991  0.03357062
+#   0.23752833 -0.21154231 -0.00536211  0.01096144 -0.08628416  0.12551947]
+
+# should be 600
+# [ 0.02562316  0.37133697  0.00982241 -0.02487976 -0.19998196 -0.03655382
+#  -0.20460871  0.06029608 -0.03905059 -0.09734652 -0.04051968  0.11789757
+#   0.10608996  0.06954718  0.04162831  0.06654395  0.15691736 -0.03615978]
