@@ -40,6 +40,7 @@ def main():
         optimize = dqn.optimize(learning_rate=1e-4)
         saver = tf.train.Saver(name="rainbow", keep_checkpoint_every_n_hours=1)
         sess.run(tf.global_variables_initializer())
+        saver.save(sess, "results/rainbow/3/training", global_step=0)
         dqn.train(num_steps=1_000_000,  # Make sure an exception arrives before we stop.
                   player=player,
                   replay_buffer=PrioritizedReplayBuffer(500000, 0.5, 0.4, epsilon=0.1),
@@ -49,7 +50,7 @@ def main():
                   batch_size=32,
                   min_buffer_size=20000,
                   handle_ep=handle_ep)  # in seconds
-        saver.save(sess, "/tmp/mathia_checkpoints/rainbow")
+        saver.save(sess, "results/rainbow/3/final", global_step=1_000_000)
 
 
 if __name__ == '__main__':
