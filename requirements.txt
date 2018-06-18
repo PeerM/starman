@@ -8,3 +8,4 @@ opencv-python
 anyrl
 tensorflow
 scikit-learn
+git+git://github.com/hardmaru/estool.git
