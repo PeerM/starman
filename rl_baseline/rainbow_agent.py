@@ -24,7 +24,8 @@ def handle_ep(steps, reward):
 
 def main():
     """Run DQN until the environment throws an exception."""
-    env = make_env(stack=False, scale_rew=False, render=None, monitor="results/rainbow/3/train_monitor",
+    base_path = "results/rainbow/4/"
+    env = make_env(stack=False, scale_rew=False, render=None, monitor=base_path + "train_monitor",
                    episodic_life=True)
     # I think the env itself allows Backtracking
     env = BatchedFrameStack(BatchedGymEnv([[env]]), num_images=4, concat=False)
@@ -40,17 +41,20 @@ def main():
         optimize = dqn.optimize(learning_rate=1e-4)
         saver = tf.train.Saver(name="rainbow", keep_checkpoint_every_n_hours=1)
         sess.run(tf.global_variables_initializer())
-        saver.save(sess, "results/rainbow/3/training", global_step=0)
-        dqn.train(num_steps=1_000_000,  # Make sure an exception arrives before we stop.
-                  player=player,
-                  replay_buffer=PrioritizedReplayBuffer(500000, 0.5, 0.4, epsilon=0.1),
-                  optimize_op=optimize,
-                  train_interval=1,
-                  target_interval=8192,
-                  batch_size=32,
-                  min_buffer_size=20000,
-                  handle_ep=handle_ep)  # in seconds
-        saver.save(sess, "results/rainbow/3/final", global_step=1_000_000)
+        saver.save(sess, base_path + "training", global_step=0)
+        try:
+            dqn.train(num_steps=1_000_000,  # Make sure an exception arrives before we stop.
+                      player=player,
+                      replay_buffer=PrioritizedReplayBuffer(500000, 0.5, 0.4, epsilon=0.1),
+                      optimize_op=optimize,
+                      train_interval=1,
+                      target_interval=8192,
+                      batch_size=32,
+                      min_buffer_size=20000,
+                      handle_ep=handle_ep)  # in seconds
+        except KeyboardInterrupt:
+            print("finishing")
+            saver.save(sess, base_path + "final", global_step=1_000_000)
 
 
 if __name__ == '__main__':
