@@ -24,35 +24,32 @@ def handle_ep(steps, reward):
 
 def main():
     """Run DQN until the environment throws an exception."""
-    env = make_env(stack=False, scale_rew=False, render=None)
-    # env = AllowBacktracking(make_env(stack=False, scale_rew=False))
-    # TODO we might not want to allow backtracking, it kinda hurts in mario
+    env = make_env(stack=False, scale_rew=False, render=None, monitor="results/rainbow/3/train_monitor",
+                   episodic_life=True)
+    # I think the env itself allows Backtracking
     env = BatchedFrameStack(BatchedGymEnv([[env]]), num_images=4, concat=False)
     config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True  # pylint: disable=E1101
+    config.gpu_options.allow_growth = True
     config.gpu_options.per_process_gpu_memory_fraction = 0.6
 
     with tf.Session(config=config) as sess:
         dqn = DQN(*rainbow_models(sess,
-                                  env.action_space.n,
-                                  gym_space_vectorizer(env.observation_space),
-                                  min_val=-200,
-                                  max_val=200))
+                                  env.action_space.n, gym_space_vectorizer(env.observation_space),
+                                  min_val=-200, max_val=200))
         player = NStepPlayer(BatchedPlayer(env, dqn.online_net), 3)
         optimize = dqn.optimize(learning_rate=1e-4)
         saver = tf.train.Saver(name="rainbow", keep_checkpoint_every_n_hours=1)
-        with tf.device("/gpu:1"):
-            sess.run(tf.global_variables_initializer())
-            dqn.train(num_steps=1_000_000,  # Make sure an exception arrives before we stop.
-                      player=player,
-                      replay_buffer=PrioritizedReplayBuffer(500000, 0.5, 0.4, epsilon=0.1),
-                      optimize_op=optimize,
-                      train_interval=1,
-                      target_interval=8192,
-                      batch_size=32,
-                      min_buffer_size=20000,
-                      handle_ep=handle_ep)  # in seconds
-            saver.save(sess, "/tmp/mathia_checkpoints/rainbow")
+        sess.run(tf.global_variables_initializer())
+        dqn.train(num_steps=1_000_000,  # Make sure an exception arrives before we stop.
+                  player=player,
+                  replay_buffer=PrioritizedReplayBuffer(500000, 0.5, 0.4, epsilon=0.1),
+                  optimize_op=optimize,
+                  train_interval=1,
+                  target_interval=8192,
+                  batch_size=32,
+                  min_buffer_size=20000,
+                  handle_ep=handle_ep)  # in seconds
+        saver.save(sess, "/tmp/mathia_checkpoints/rainbow")
 
 
 if __name__ == '__main__':

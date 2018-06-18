@@ -61,13 +61,13 @@ class EpisodicLifeEnv(gym.Wrapper):
         self.lives = 0
         self.was_real_done = True
 
-    def _step(self, action):
+    def step(self, action):
         obs, reward, done, info = self.env.step(action)
         self.was_real_done = done
         # check current lives, make loss of life terminal,
         # then update lives to handle bonus lives
-        lives = self.env.unwrapped.ale.lives()
-        if lives < self.lives and lives > 0:
+        lives = info["lives"]
+        if self.lives > lives > 0:
             # for Qbert sometimes we stay in lives == 0 condtion for a few frames
             # so its important to keep lives > 0, so that we only reset once
             # the environment advertises done.
@@ -75,17 +75,19 @@ class EpisodicLifeEnv(gym.Wrapper):
         self.lives = lives
         return obs, reward, done, info
 
-    def _reset(self, **kwargs):
+    def reset(self, **kwargs):
         """Reset only when lives are exhausted.
         This way all states are still reachable even though lives are episodic,
         and the learner need not know about any of this behind-the-scenes.
         """
         if self.was_real_done:
             obs = self.env.reset(**kwargs)
+            lives = 2  # TODO think about how this can be improved; HACK alert
         else:
             # no-op step to advance from terminal/lost life state
-            obs, _, _, _ = self.env.step(0)
-        self.lives = self.env.unwrapped.ale.lives()
+            obs, _, _, info = self.env.step(0)
+            lives = info["lives"]
+        self.lives = lives
         return obs
 
 
@@ -205,7 +207,7 @@ def wrap_deepmind(env, episode_life=True, clip_rewards=True, frame_stack=False, 
         if 'FIRE' in env.unwrapped.get_action_meanings():
             env = FireResetEnv(env)
     except AttributeError:
-        pass # retro envs have no action meanings
+        pass  # retro envs have no action meanings
     env = WarpFrame(env)
     if scale:
         env = ScaledFloatFrame(env)
