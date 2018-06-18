@@ -16,12 +16,12 @@ render = 2
 env = retro.make("SuperMarioBros-Nes")
 if monitor is not None:
     env = Monitor(env, monitor)
+if render is not None:
+    env = AutoRenderer(env, auto_render_period=render)
 if action_repeat:
     env = FrameStack(env, 4)
 if episodic_life:
     env = EpisodicLifeEnv(env, [0] * 9)
-if render is not None:
-    env = AutoRenderer(env, auto_render_period=render)
 raw_env = env.unwrapped
 # env = AllowBacktracking(make_env(stack=False, scale_rew=False))
 first_obs = env.reset()
@@ -44,4 +44,3 @@ for episode_i in range(3):
             print("episode done")
             break
 raw_env.render(close=True)
-
