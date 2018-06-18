@@ -6,6 +6,7 @@ import numpy as np
 from gym.wrappers import Monitor, TimeLimit
 from tqdm import tqdm
 
+from multiprocessing import Pool
 from atari_wrappers import FrameStack, EpisodicLifeEnv
 from small_evo.agent import Agent
 from small_evo.wrappers import AutoRenderer
@@ -19,7 +20,7 @@ class Evaluator(object):
         monitor = None
         action_repeat = True
         episodic_life = True
-        render = 5
+        render = None
         env = retro.make("SuperMarioBros-Nes")
         if monitor is not None:
             env = Monitor(env, monitor)
@@ -66,15 +67,25 @@ class Evaluator(object):
         return reward_sum
 
 
+def init_worker():
+    global evaler
+    evaler = Evaluator()
+
+
+def worker(weights):
+    global evaler
+    return evaler.evaluate(weights)
+
+
 MY_REQUIRED_REWARD = 800
 
 
 def evolve():
     evaler = Evaluator()
-    solver = OpenES(evaler.n_weights, popsize=25)
-
+    solver = OpenES(evaler.n_weights, popsize=100)
+    del evaler
     # for generation in tqdm(count(), unit="generation"):
-
+    pool = Pool(4, init_worker)
     best_solution_so_far = None
     try:
         for generation in count():
@@ -84,12 +95,13 @@ def evolve():
 
             # create an array to hold the solutions.
             # solver.popsize = population size
-            rewards = np.zeros(solver.popsize)
+            # rewards = np.zeros(solver.popsize)
 
             # calculate the reward for each given solution
             # using your own evaluate() method
-            for i in range(solver.popsize):
-                rewards[i] = evaler.evaluate(solutions[i])
+            # for i in range(solver.popsize):
+            #     rewards[i] = evaler.evaluate(solutions[i])
+            rewards = pool.map(worker, solutions, 10)
 
             # give rewards back to ES
             solver.tell(rewards)
