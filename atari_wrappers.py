@@ -53,13 +53,14 @@ class FireResetEnv(gym.Wrapper):
 
 
 class EpisodicLifeEnv(gym.Wrapper):
-    def __init__(self, env):
+    def __init__(self, env, noop=0):
         """Make end-of-life == end-of-episode, but only reset on true game over.
         Done by DeepMind for the DQN and co. since it helps value estimation.
         """
         gym.Wrapper.__init__(self, env)
         self.lives = 0
         self.was_real_done = True
+        self.noop = noop
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
@@ -67,10 +68,12 @@ class EpisodicLifeEnv(gym.Wrapper):
         # check current lives, make loss of life terminal,
         # then update lives to handle bonus lives
         lives = info["lives"]
-        if self.lives > lives > 0:
+        if self.lives > lives >= 0:
             # for Qbert sometimes we stay in lives == 0 condtion for a few frames
             # so its important to keep lives > 0, so that we only reset once
             # the environment advertises done.
+
+            # in mario the last live is lives==0
             done = True
         self.lives = lives
         return obs, reward, done, info
@@ -85,7 +88,7 @@ class EpisodicLifeEnv(gym.Wrapper):
             lives = 2  # TODO think about how this can be improved; HACK alert
         else:
             # no-op step to advance from terminal/lost life state
-            obs, _, _, info = self.env.step(0)
+            obs, _, _, info = self.env.step(self.noop)
             lives = info["lives"]
         self.lives = lives
         return obs
