@@ -1,3 +1,4 @@
+import json
 import pickle
 import random
 from itertools import count
@@ -17,7 +18,7 @@ order = ["coins", "levelHi", "levelLo", "lives", "score", "scrolling", "time", "
 
 
 class Evaluator(object):
-    def __init__(self, render=None, max_episode_steps=2000):
+    def __init__(self, render=None, max_episode_steps=2000, deterministic=True):
         monitor = None
         action_repeat = True
         episodic_life = True
@@ -42,7 +43,7 @@ class Evaluator(object):
         self.index_a = raw_env.buttons.index("A")
         self.index_b = raw_env.buttons.index("B")
         self.obs_shape = len(first_info.values())
-        self.agent = Agent(2, self.obs_shape, deterministic=True, embed=True)
+        self.agent = Agent(2, self.obs_shape, deterministic, embed=True)
         self.weight_shape = self.agent.weight_shape()
         self.n_weights = self.weight_shape[0] * self.agent.weight_shape()[1]
         with open("scaler.pickle", "rb") as pickle_out_file:
@@ -80,12 +81,12 @@ def worker(weights):
     return evaler.evaluate(weights)
 
 
-MY_REQUIRED_REWARD = 800
+MY_REQUIRED_REWARD = 1400
 
 
 def evolve():
     evaler = Evaluator()
-    solver = OpenES(evaler.n_weights, popsize=100)
+    solver = OpenES(evaler.n_weights, popsize=200)
     del evaler
     # for generation in tqdm(count(), unit="generation"):
     pool = Pool(4, init_worker)
@@ -113,7 +114,12 @@ def evolve():
             reward_vector = solver.result()
 
             generation_max_reward = max(rewards)
-            print("gen: {},max:{},vector:{}".format(generation, generation_max_reward, reward_vector[1]))
+            generation_mean_reward = sum(rewards) / len(rewards)
+            generation_min_reward = min(rewards)
+
+            # print("gen: {},max:{},vector:{}".format(generation, generation_max_reward, reward_vector[1]))
+            print("gen: {},max:{},mean:{},min:{}".format(
+                generation, generation_max_reward, generation_mean_reward, generation_min_reward))
             best_solution_so_far = reward_vector[0]
             if generation_max_reward > MY_REQUIRED_REWARD:
                 return reward_vector[0]
@@ -134,3 +140,20 @@ if __name__ == '__main__':
 # [ 0.02562316  0.37133697  0.00982241 -0.02487976 -0.19998196 -0.03655382
 #  -0.20460871  0.06029608 -0.03905059 -0.09734652 -0.04051968  0.11789757
 #   0.10608996  0.06954718  0.04162831  0.06654395  0.15691736 -0.03615978]
+
+# gen: 6,max:998.0,mean:218.98666666666668,min:0.0
+# [ 0.06603212 -0.08467746  0.06253882  0.11540868 -0.06345578  0.13030864
+#  -0.17183566 -0.18778044 -0.05617174 -0.06646609 -0.12728679  0.0654319
+#   0.15570651  0.07487635 -0.01767378  0.08531394 -0.08403758 -0.08138834]
+
+# gen: 80,max:606.0,mean:288.36,min:200.0
+# array([ 0.08403732,  0.04348524, -0.25320653, -0.03906601, -0.15514774,
+#         0.03999026, -0.13576738, -0.00630538, -0.03668982,  0.16911228,
+#        -0.1284639 ,  0.09894814, -0.00704155,  0.07488644, -0.07443161,
+#         0.00990574, -0.04313399, -0.15795819])
+
+
+# gen: 183,max:780.0,mean:478.61,min:0.0
+# [-0.06935628  0.06078843 -0.66082906 -0.50534815  0.42725888  0.40346524
+#  -1.07318775  0.19004175 -0.04961645  0.08676088 -0.10972614  0.71822668
+#   0.2710733  -0.43031814 -0.31273709  0.76265546 -0.52503067  0.1228674 ]
