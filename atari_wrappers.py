@@ -94,6 +94,25 @@ class EpisodicLifeEnv(gym.Wrapper):
         return obs
 
 
+class SingleLifeEnv(gym.Wrapper):
+    def __init__(self, env):
+        """Make end-of-life == end-of-episode, and reset normaly
+        """
+        gym.Wrapper.__init__(self, env)
+        self.lives = 0
+        self.was_real_done = True
+
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+        # check current lives, make loss of life terminal,
+        # then update lives to handle bonus lives
+        lives = info["lives"]
+        if self.lives > lives:
+            done = True
+        self.lives = lives
+        return obs, reward, done, info
+
+
 class MaxAndSkipEnv(gym.Wrapper):
     def __init__(self, env, skip=4):
         """Return only every `skip`-th frame"""

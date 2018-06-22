@@ -38,3 +38,6 @@ class RewardPlotter(object):
 
     def close(self):
         plt.close()
+
+    def save_file(self, filename):
+        plt.savefig(filename)

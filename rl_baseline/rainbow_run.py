@@ -27,15 +27,17 @@ from rl_baseline.mario_util import AllowBacktracking, make_env
 def main():
     """Run DQN until the environment throws an exception."""
     # "results/rainbow/2/videos/6"
-    env = make_env(stack=False, scale_rew=False, render=16, monitor=None, timelimit=False, episodic_life=True)
+    save_dir = "results/rainbow/6/val_monitor/2"
+    env = make_env(stack=False, scale_rew=False, render=32, monitor=save_dir,
+                   timelimit=False, episodic_life=True, video=lambda id: True)
     # env = AllowBacktracking(make_env(stack=False, scale_rew=False))
     env = BatchedFrameStack(BatchedGymEnv([[env]]), num_images=4, concat=False)
     config = tf.ConfigProto()
 
     with tf.Session(config=config) as sess:
-        saver = tf.train.import_meta_graph("results/rainbow/2/rainbow.ckpt.meta", clear_devices=True)
+        saver = tf.train.import_meta_graph("results/rainbow/6/final-2000000.meta", clear_devices=True)
         # saver.restore(sess, tf.train.latest_checkpoint('results/rainbow/2'))
-        saver.restore(sess, 'results/rainbow/2/rainbow.ckpt')
+        saver.restore(sess, 'results/rainbow/6/final-2000000')
         model = LoadedNetwork(sess, gym_space_vectorizer(env.observation_space))
         # rebuild the online_net form the saved model
         # type <anyrl.models.dqn_dist.NatureDistQNetwork object at ???>
@@ -46,7 +48,7 @@ def main():
             try:
                 for episode_index in tqdm(range(20), unit="episode"):
                     axes = make_axes()
-                    plotter = RewardPlotter(axes, save_period=20, render_period=300, max_entries=400)
+                    plotter = RewardPlotter(axes, save_period=20, render_period=300, max_entries=600)
                     for i in count():
                         trajectories = player.play()
                         end_of_episode = False
@@ -59,6 +61,7 @@ def main():
                         if end_of_episode:
                             # plt.show()
                             plotter.render()
+                            plotter.save_file("{}/e{}.pdf".format(save_dir, episode_index))
                             plotter.close()
                             break
             except KeyboardInterrupt:

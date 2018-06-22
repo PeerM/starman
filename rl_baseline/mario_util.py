@@ -12,7 +12,7 @@ from atari_wrappers import WarpFrame, FrameStack, EpisodicLifeEnv
 from small_evo.wrappers import AutoRenderer
 
 
-def make_env(stack=True, scale_rew=True, render=None, monitor=None, timelimit=False, episodic_life=False):
+def make_env(stack=True, scale_rew=True, render=None, monitor=None, timelimit=False, episodic_life=False, video=None):
     """
     Create an environment with some standard wrappers.
     """
@@ -20,15 +20,17 @@ def make_env(stack=True, scale_rew=True, render=None, monitor=None, timelimit=Fa
     env = MarioDiscretizer(env)
     if scale_rew:
         env = RewardScaler(env)
+    if episodic_life:
+        env = EpisodicLifeEnv(env)
     if timelimit:
-        env = TimeLimit(env, max_episode_steps=200 * 60)
+        if episodic_life:
+            raise Exception("timelimit and episodic_life don't work together")
+        env = TimeLimit(env, max_episode_steps=4000)  # should be enough for the level
     if monitor is not None:
-        env = Monitor(env, monitor)
+        env = Monitor(env, monitor, video)
     env = WarpFrame(env)
     if stack:
         env = FrameStack(env, 4)
-    if episodic_life:
-        env = EpisodicLifeEnv(env)
     if render is not None:
         env = AutoRenderer(env, auto_render_period=render)
     return env

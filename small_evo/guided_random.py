@@ -1,4 +1,5 @@
 import random
+from itertools import count
 
 import retro
 from anyrl.models import Model, RandomAgent
@@ -7,7 +8,9 @@ from gym import Wrapper, ActionWrapper
 from gym.spaces import Discrete, MultiBinary
 from gym.wrappers import Monitor
 from anyrl.rollouts.rollout import Rollout
-from atari_wrappers import FrameStack, EpisodicLifeEnv
+from tqdm import tqdm
+
+from atari_wrappers import FrameStack, EpisodicLifeEnv, SingleLifeEnv
 from small_evo.wrappers import AutoRenderer
 
 
@@ -51,13 +54,13 @@ class MarioRestrictedDiscretizer(ActionWrapper):
 
 
 if __name__ == '__main__':
-    monitor = "results/random/5"
+    monitor = "results/random/7"
     action_repeat = True
-    episodic_life = True
-    render = 60
+    single_life = True
+    render = None
     env = retro.make("SuperMarioBros-Nes")
-    if episodic_life:
-        env = EpisodicLifeEnv(env, [0] * 9)
+    if single_life:
+        env = SingleLifeEnv(env)
     if monitor is not None:
         env = Monitor(env, monitor, video_callable=lambda i: True)
     if render is not None:
@@ -67,7 +70,12 @@ if __name__ == '__main__':
     env = MarioRestrictedDiscretizer(env)
     # model = WeightedRandomAgent()
     model = RandomAgent(lambda: 1 if random.random() > 0.1 else 0)
-    player = BasicRoller(env, model, min_episodes=4)
-    for i in range(10):
+    player = BasicRoller(env, model, min_episodes=5)
+    total_rewards = []
+    for i in tqdm(range(40)):
         rollouts = player.rollouts()
-        print([roll.total_reward for roll in rollouts])
+        total_rewards += [roll.total_reward for roll in rollouts]
+    print(total_rewards)
+    rewards_numbers = list(zip(count(), total_rewards))
+    sorted_reward_numbers = sorted(rewards_numbers, key=lambda t: t[1])
+    print(sorted_reward_numbers[-5:])
