@@ -27,9 +27,9 @@ from rl_baseline.mario_util import AllowBacktracking, make_env
 def main():
     """Run DQN until the environment throws an exception."""
     # "results/rainbow/2/videos/6"
-    save_dir = "results/rainbow/7/val_monitor/1"
-    env = make_env(stack=False, scale_rew=False, render=3, monitor=None,
-                   timelimit=False, episodic_life=True, video=lambda id: True)
+    save_dir = "results/rainbow/7/val_monitor/2"
+    env = make_env(stack=False, scale_rew=False, render=60, monitor=save_dir,
+                   timelimit=False, episodic_life=False, single_life=True, video=lambda id: True)
     # env = AllowBacktracking(make_env(stack=False, scale_rew=False))
     env = BatchedFrameStack(BatchedGymEnv([[env]]), num_images=4, concat=False)
     config = tf.ConfigProto()
@@ -46,9 +46,9 @@ def main():
         with tf.device("/cpu"):
             # sess.run(tf.global_variables_initializer())
             try:
-                for episode_index in tqdm(range(6), unit="episode"):
+                for episode_index in tqdm(range(40), unit="episode"):
                     axes = make_axes()
-                    plotter = RewardPlotter(axes, save_period=20, render_period=300, max_entries=600)
+                    plotter = RewardPlotter(axes, save_period=40, render_period=600, max_entries=600)
                     for i in count():
                         trajectories = player.play()
                         end_of_episode = False
@@ -61,7 +61,7 @@ def main():
                         if end_of_episode:
                             # plt.show()
                             plotter.render()
-                            # plotter.save_file("{}/e{}.pdf".format(save_dir, episode_index))
+                            plotter.save_file("{}/e{}.pdf".format(save_dir, episode_index))
                             plotter.close()
                             break
             except KeyboardInterrupt:

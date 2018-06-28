@@ -49,13 +49,13 @@ def movie_to_action_count(path, filename):
 
 
 # In[4]:
-movie_to_distribution("/home/peer/PycharmProjects/starman/movies/", "HL_SMBwarpless_V4.fm2", 7)
+# movie_to_distribution("/home/peer/PycharmProjects/starman/movies/", "happylee_mars608-smb-warpless.fm2", 8)
 plt.clf()
-# In[4]:
-movie_to_distribution("/home/peer/PycharmProjects/starman/movies/", "1-1_basic_5.fm2", 6)
-plt.clf()
-# In[4]:
-movie_to_distribution("/home/peer/PycharmProjects/starman/movies/", "happylee-supermariobros,warped.fm2", 5)
-plt.clf()
+# # In[4]:
+# movie_to_distribution("/home/peer/PycharmProjects/starman/movies/", "1-1_basic_5.fm2", 6)
+# plt.clf()
+# # In[4]:
+# movie_to_distribution("/home/peer/PycharmProjects/starman/movies/", "happylee-supermariobros,warped.fm2", 5)
+# plt.clf()
 # In[5]:
 movie_to_action_count("/home/peer/PycharmProjects/starman/movies/", "11_1-1_small_walking.fm2")

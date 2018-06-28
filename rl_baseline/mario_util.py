@@ -8,11 +8,11 @@ import numpy as np
 import retro
 from gym.wrappers import Monitor, TimeLimit
 
-from atari_wrappers import WarpFrame, FrameStack, EpisodicLifeEnv
+from atari_wrappers import WarpFrame, FrameStack, EpisodicLifeEnv, SingleLifeEnv
 from small_evo.wrappers import AutoRenderer
 
 
-def make_env(stack=True, scale_rew=True, render=None, monitor=None, timelimit=False, episodic_life=False, video=None):
+def make_env(stack=True, scale_rew=True, render=None, monitor=None, timelimit=False, episodic_life=False, video=None, single_life=False):
     """
     Create an environment with some standard wrappers.
     """
@@ -22,6 +22,10 @@ def make_env(stack=True, scale_rew=True, render=None, monitor=None, timelimit=Fa
         env = RewardScaler(env)
     if episodic_life:
         env = EpisodicLifeEnv(env)
+    if single_life:
+        if episodic_life:
+            raise Exception("single_life and episodic_live can not be combined")
+        env = SingleLifeEnv(env)
     if timelimit:
         if episodic_life:
             raise Exception("timelimit and episodic_life don't work together")

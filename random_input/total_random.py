@@ -1,4 +1,5 @@
 import random
+from functools import reduce
 from itertools import count
 
 import retro
@@ -8,7 +9,7 @@ from gym import Wrapper, ActionWrapper
 from gym.spaces import Discrete, MultiBinary
 from gym.wrappers import Monitor
 from anyrl.rollouts.rollout import Rollout
-from tqdm import tqdm
+from tqdm import tqdm, trange
 
 from atari_wrappers import FrameStack, EpisodicLifeEnv, SingleLifeEnv
 from rl_baseline.mario_util import MarioDiscretizer
@@ -37,7 +38,7 @@ class MarioRestrictedDiscretizer(ActionWrapper):
 
 
 if __name__ == '__main__':
-    monitor = None
+    monitor = "results/unbiased_random/1"
     action_repeat = True
     single_life = True
     render = None
@@ -46,7 +47,7 @@ if __name__ == '__main__':
     if single_life:
         env = SingleLifeEnv(env)
     if monitor is not None:
-        env = Monitor(env, monitor, video_callable=lambda i: True)
+        env = Monitor(env, monitor, video_callable=lambda i: False)
     if render is not None:
         env = AutoRenderer(env, auto_render_period=render)
     if action_repeat:
@@ -54,8 +55,12 @@ if __name__ == '__main__':
     # model = WeightedRandomAgent()
     model = RandomAgent(lambda: env.action_space.sample())
     player = BasicRoller(env, model, min_episodes=1)
+    # total_rollouts = [player.rollouts() for rollout_i in trange(40)]
+    # flat_rollouts = reduce(list.__add__, total_rollouts)
+    # total_rewards = map(lambda r: r.total_reward, flat_rollouts)
+    # [filename for path in dirs for filename in os.listdir(path)]
     total_rewards = []
-    for i in tqdm(range(40)):
+    for i in tqdm(range(150)):
         rollouts = player.rollouts()
         total_rewards += [roll.total_reward for roll in rollouts]
     print(total_rewards)
